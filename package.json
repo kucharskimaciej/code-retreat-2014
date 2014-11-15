@@ -1,0 +1,22 @@
+{
+  "name": "code-retreat-2014",
+  "version": "1.0.0",
+  "description": "code-retreat-2014 =================",
+  "main": "main.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "'./node_modules/mocha/bin/mocha --watch -R spec'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kucharskimaciej/code-retreat-2014.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kucharskimaciej/code-retreat-2014/issues"
+  },
+  "homepage": "https://github.com/kucharskimaciej/code-retreat-2014"
+}
