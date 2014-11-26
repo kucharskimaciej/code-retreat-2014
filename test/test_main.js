@@ -97,6 +97,16 @@ describe('Game of Life', function () {
 			this.game.at(1, 0).should.be.ok;
 		});
 
+        it('revives a dead cell if it has N=3 even if one of parents dies in process', function () {
+            this.game.spawn(0, 0);
+            this.game.spawn(0, 1);
+            this.game.spawn(2, 0);
+
+            this.game.tick();
+
+            this.game.at(1, 0).should.be.ok;
+        });
+
 	});
 
 	describe('#getCellsInProximity', function () {
