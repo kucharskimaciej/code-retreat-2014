@@ -1,7 +1,13 @@
-Code Retreat 2014
+Game of Life Kata
 =================
 
-This repository contains all code written during Code Retreat on the Global Day of Coderetreat 2014.
+This repository holds code for each of mine Game of Life Kata coding sessions.
 
 ## code organization ##
-Each coding sessions will be saved into a separate branch.
+Each session will be pushed to repository as a single commit; watch this file for more information about restrictions for the current coding session.
+
+## code restrictions ##
+
+* no `this` keyword
+* maximum 5 lines of code per method
+* maximum of 80 characters per line

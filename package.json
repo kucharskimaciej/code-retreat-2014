@@ -18,5 +18,10 @@
   "bugs": {
     "url": "https://github.com/kucharskimaciej/code-retreat-2014/issues"
   },
-  "homepage": "https://github.com/kucharskimaciej/code-retreat-2014"
+  "homepage": "https://github.com/kucharskimaciej/code-retreat-2014",
+  "devDependencies": {
+    "chai": "^1.10.0",
+    "lodash": "^2.4.1",
+    "mocha": "^2.0.1"
+  }
 }
