@@ -1,135 +1,123 @@
 var _ = require('lodash');
 var should = require('chai').should();
 
-var GameOfLife = require('../main.js');
+var Cell = require('../main.js').Cell;
 
-describe('Game of Life', function () {
 
-	it('is defined', function() {
-		should.exist(GameOfLife);
+
+
+describe('Cell', function () {
+	it('should be defined', function () {
+		should.exist(Cell)
 	});
 
-	it('exposes `new` that returns an instance', function () {
-		var game = GameOfLife.new();
-		should.exist(game);
+	it('can be instantinated', function () {
+		var cell = new Cell;
+		Cell.should.be.ok;
 	});
 
-	describe('#at', function () {
-		beforeEach(function() {
-			this.game = GameOfLife.new();
+	describe(':at', function () {
+		it('is exposed by Cell class', function () {
+			Cell.at.should.be.a('function')
 		});
 
-		it('game exposes `at` method that returns state of cell at coordinates', function () {
-			should.equal( this.game.at(0, 0), false);
-		});
-	});
-
-	describe('#spawn', function () {
-		beforeEach(function() {
-			this.game = GameOfLife.new();
-		});
-
-		it('game exposes `spawn` method that brings cell at coordinates to life', function () {
-			this.game.spawn(0, 0);
-
-			should.equal( this.game.at(0, 0), true );
-			should.equal( this.game.at(0, 1), false);
+		it('should return false/true, depending on state of cell on coords', function () {
+			Cell.at(0, 0).should.eql(false);
 		});
 	});
 
-	describe('#kill', function () {
-		beforeEach(function() {
-			this.game = GameOfLife.new();
+	describe(':reset', function () {
+		it('is defined', function () {
+			Cell.reset.should.be.a('function');
 		});
 
-		it('game exposes `kill` method that kills cell at coordinates', function () {
-			this.game.spawn(0, 0);
-			this.game.kill(0, 0);
-
-			should.equal( this.game.at(0, 0), false);
+		it('should kill all living cells resetting the game state', function () {
+			new Cell(0, 0);
+			Cell.at(0,0).should.be.ok;
+			Cell.reset();
+			Cell.at(0,0).should.be.not.ok;
 		});
 	});
 
-	describe('#tick', function () {
-		beforeEach(function() {
-			this.game = GameOfLife.new();
+	describe('creating new cell', function () {
+		it('should know it\'s coords', function () {
+			var cell = new Cell(0, 0);
+			cell.x.should.eql(0);
+			cell.y.should.eql(0);
 		});
 
-		it('should exists', function() {
-			should.exist(GameOfLife.new().tick);
+		it('should be detectable', function () {
+			new Cell(1, 1);
+
+			Cell.at(1,1).should.be.ok;
 		});
-		it('should be a function', function () {
-			GameOfLife.new().tick.should.be.an('function');
-		});
+	});
+	
 
-		it('should kill cells that have N<2', function() {
-			this.game.spawn(0, 0);
-			this.game.spawn(0, 1);
-			this.game.spawn(-1, 0);
 
-			this.game.spawn(1, 10);
-
-			this.game.tick();
-
-			this.game.at(0, 0).should.be.ok;
-			this.game.at(1, 10).should.not.be.ok;
+	describe('#die', function () {
+		it('should be defined', function () {
+			var cell = new Cell(0, 0);
+			cell.should.respondTo('die');
 		});
 
-		it('should kill cells that have N>3', function() {
-			this.game.spawn(0, 0);
-			this.game.spawn(0, 1);
-			this.game.spawn(0, -1);
-			this.game.spawn(-1, 0);
-			this.game.spawn(1, 1);
+		it('should remove cell from game', function () {
+			var cell = new Cell(0, 0);
 
-			this.game.tick();
+			Cell.at(0,0).should.be.ok;
 
-			this.game.at(0, 0).should.not.be.ok;
+			cell.die();
+			Cell.at(0,0).should.be.not.ok;
+
 		});
-
-		it('revives a dead cell if it has N=3', function () {
-			this.game.spawn(0, 0);
-			this.game.spawn(0, 1);
-			this.game.spawn(0, -1);
-
-			this.game.tick();
-
-			this.game.at(1, 0).should.be.ok;
-		});
-
-        it('revives a dead cell if it has N=3 even if one of parents dies in process', function () {
-            this.game.spawn(0, 0);
-            this.game.spawn(0, 1);
-            this.game.spawn(2, 0);
-
-            this.game.tick();
-
-            this.game.at(1, 0).should.be.ok;
-        });
-
 	});
 
-	describe('#getCellsInProximity', function () {
-		before(function() {
-			this.game = GameOfLife.new();
+	describe(':advance', function () {
+		beforeEach(function () {
+			Cell.reset();
 		});
 
-		it('is defined', function() {
-			this.game.should.respondTo('getCellsInProximity');
-		});
-		it('return array of 9 tags', function() {
-			var arr = this.game.getCellsInProximity('0,0');
-
-			arr.length.should.eql(9);
-		});
-		it('returns correct tags', function() {
-			var correctResult = [ '-1,-1', '-1,0', '-1,1', '0,-1', '0,0',
-				'0,1', '1,-1', '1,0', '1,1' ];
-			_.difference(this.game.getCellsInProximity('0,0'), correctResult).length.should.eql(0);
+		it('should be available', function () {
+			Cell.advance.should.be.a('function');
 		});
 
+		it('should kill cells that have N < 2', function () {
+			new Cell(0, 0);
+			Cell.advance();
+
+			Cell.at(0, 0).should.be.not.ok;
+		});
+
+		it('should perserve cells that have 2 <= N <= 3', function () {
+			new Cell(0, 0);
+			new Cell(0, 1);
+			new Cell(1, 0);
+
+			Cell.advance();
+			Cell.at(0, 0).should.be.ok;
+
+
+		});
+
+		it('should spawn new cells when they have N=3', function () {
+			new Cell(0, -1);
+			new Cell(0, 0);
+			new Cell(0, 1);
+
+			Cell.advance();
+			Cell.at(1, 0).should.be.ok;
+		})
+
+		it('should kill and spawn cells simultaneously', function () {
+			new Cell(0, -1);
+			new Cell(0, 0);
+			new Cell(0, 1);
+
+			Cell.advance();
+			Cell.at(1, 0).should.be.ok;
+			Cell.at(0, 1).should.be.not.ok;
+		})
 	});
-
 });
 
 
