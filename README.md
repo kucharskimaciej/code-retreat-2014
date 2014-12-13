@@ -10,7 +10,11 @@ Each session will be pushed to repository as a single commit; watch this file fo
 **Session 1**
 no restrictions
 
-
 **Sesstion 2**
 * no restrictions for the board (either finite, tours or infinite)
 * game is immutable
+
+**Session 3**
+* infinite board
+* no if/ternary/switch
+* from the perspective of a cell

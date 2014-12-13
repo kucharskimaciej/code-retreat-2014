@@ -1,80 +1,84 @@
 var _ = require('lodash');
 
-var Game = (function () {
-	var SIZE;
+var Cell = (function () {
+	var Cell = function (x, y) {
+		this.x = x;
+		this.y = y;
+		this.coords = x+':'+y;
 
-	SIZE = 3;
-	var Game = function (seed) {
-		this.board = seed || this.seed();
+		this.neighbourCoords = this.getNeighbourCoords();
+
+		Cell.livingCells[this.coords] = this;
 	};
 
-	Game.prototype.seed = function () {
-	    var seed, x, y;
-		seed = [];
-
-		for(x = 0; x < SIZE; x++) {
-			seed[x] = [];
-			for(y = 0; y < SIZE; y++) {
-				seed[x][y] = false;
-			}
-		}
-
-		return seed
-	};
-
-	Game.prototype.at = function (x, y) {
-		if(this.isWithinBounds(x, y)) {
-			return !!this.board[x][y];
-		}
-	    return false;
-	};
-
-	Game.prototype.isWithinBounds = function (x, y) {
-	    return x >= 0 && y >= 0 && x < SIZE && y < SIZE;
-	};
-
-	Game.prototype.spawn = function (x, y) {
-	    var seed;
-
-		if(this.isWithinBounds(x, y)) {
-			seed = _.cloneDeep(this.board);
-			seed[x][y] = true;
-
-			return new Game(seed);
-		}
-		throw new Error("Out of bounds");
-	};
-
-	Game.prototype.tick = function () {
-		var seed, self;
-		self = this;
-
-		seed = this.board.reduce(function(total, row, x){
-			total[x] = row.reduce(function (subTotal, cell, y) {
-				var nCount = self.getNeighbourCount(x, y);
-				subTotal[y] = nCount === 3 || (self.at(x, y) && nCount === 2);
-				return subTotal;
-			}, []);
-			return total;
-		}, []);
-
-		return new Game(seed);
-	};
-
-	Game.prototype.getNeighbourCount = function (x, y) {
-		var self = this;
-		return [-1, 0, 1].reduce(function (total, dx) {
-			return total + [-1, 0, 1].reduce(function (subtotal, dy) {
-				if(dx === 0 && dy === 0) {
-					return subtotal;
-				}
-				return subtotal + +self.at(x+dx, y+dy);
-			}, 0);
+	Cell.prototype.getNeighboursCount = function () {
+		return this.neighbourCoords.reduce(function (total, coord) {
+			return total + +(!!Cell.livingCells[coord]);
 		}, 0);
 	};
 
-	return Game;
+	Cell.prototype.getNeighbourCoords = function () {
+		var neighbourCoords = [], delta = [-1, 0, 1],
+			x = this.x, y = this.y;
+
+		delta.forEach(function (dx) {
+			delta.forEach(function (dy) {
+				(dx || dy) && neighbourCoords.push((x+dx)+':'+(y+dy));
+			}, this);
+		}, this);
+		return neighbourCoords;
+	};
+
+	Cell.prototype.makeBabies = function (survivingCellsHash) {
+		var survives, tryMake;
+	    survives = function (cell) {
+			return (cell.getNeighboursCount() === 3) &&
+				(survivingCellsHash[cell.coords] = cell);
+		};
+
+		tryMake = function (x, y) {
+			var maybeBaby;
+			maybeBaby = new Cell(x, y);
+			survives(maybeBaby);
+			maybeBaby.die();
+		};
+
+		this.neighbourCoords.forEach(function (coords) {
+			var x, y;
+			x = +coords.split(':')[0];
+			y = +coords.split(':')[1];
+
+			!Cell.at(x, y) && tryMake(x, y);
+		}, this);
+	};
+
+	Cell.prototype.die = function () {
+		delete Cell.livingCells[this.coords];
+	};
+
+	Cell.tick = function () {
+		var cellHash = {};
+		_.keys(Cell.livingCells).forEach(function (coords) {
+			var cell, nCount;
+			cell = Cell.livingCells[coords];
+			nCount = cell.getNeighboursCount();
+
+			(nCount === 2 || nCount === 3) && (cellHash[coords] = cell);
+			cell.makeBabies(cellHash);
+		});
+		Cell.livingCells = cellHash;
+	};
+
+	Cell.livingCells = {};
+	Cell.resetStatus = function () {
+		Cell.livingCells = {};
+	};
+	Cell.at = function (x, y) {
+		return Cell.livingCells[x+':'+y] || null;
+	};
+
+	return Cell;
+
 }());
 
-
-module.exports = Game;
+module.exports = Cell;
