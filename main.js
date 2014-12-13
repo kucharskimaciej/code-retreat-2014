@@ -1,74 +1,80 @@
 var _ = require('lodash');
 
-
 var Game = (function () {
-	var Game = function () {
-		this.size = 10;
-		this.board = this.createBoard(this.size);
+	var SIZE;
+
+	SIZE = 3;
+	var Game = function (seed) {
+		this.board = seed || this.seed();
 	};
 
-	Game.prototype.createBoard = function (size) {
-	    var board = [];
-		for (var i = 0; i< size; i++) {
-			board[i] = [];
-			for(var j = 0; j < size; j++) {
-				board[i][j] = false;
+	Game.prototype.seed = function () {
+	    var seed, x, y;
+		seed = [];
+
+		for(x = 0; x < SIZE; x++) {
+			seed[x] = [];
+			for(y = 0; y < SIZE; y++) {
+				seed[x][y] = false;
 			}
 		}
 
-		return board;
+		return seed
 	};
 
 	Game.prototype.at = function (x, y) {
-		if(x < 0 || x >= this.size) return false;
-	    return !!this.board[x][y];
+		if(this.isWithinBounds(x, y)) {
+			return !!this.board[x][y];
+		}
+	    return false;
+	};
+
+	Game.prototype.isWithinBounds = function (x, y) {
+	    return x >= 0 && y >= 0 && x < SIZE && y < SIZE;
 	};
 
 	Game.prototype.spawn = function (x, y) {
-	    this.board[x][y] = true;
-	};
+	    var seed;
 
-	Game.prototype.getNCount = function (rI, cI) {
-		var nCount = 0;
-		if(this.at(rI+1, cI+1)) nCount++;
-		if(this.at(rI+1, cI)) nCount++;
-		if(this.at(rI+1, cI-1)) nCount++;
-		if(this.at(rI, cI+1)) nCount++;
-		if(this.at(rI, cI-1)) nCount++;
-		if(this.at(rI-1, cI+1)) nCount++;
-		if(this.at(rI-1, cI)) nCount++;
-		if(this.at(rI-1, cI-1)) nCount++;
+		if(this.isWithinBounds(x, y)) {
+			seed = _.cloneDeep(this.board);
+			seed[x][y] = true;
 
-		return nCount;
+			return new Game(seed);
+		}
+		throw new Error("Out of bounds");
 	};
 
 	Game.prototype.tick = function () {
-		var newBoard = this.createBoard(this.size);
+		var seed, self;
+		self = this;
 
-		this.board.forEach(function (row, rI) {
-			row.forEach(function (cell, cI) {
-				var nCount = this.getNCount(rI, cI);
+		seed = this.board.reduce(function(total, row, x){
+			total[x] = row.reduce(function (subTotal, cell, y) {
+				var nCount = self.getNeighbourCount(x, y);
+				subTotal[y] = nCount === 3 || (self.at(x, y) && nCount === 2);
+				return subTotal;
+			}, []);
+			return total;
+		}, []);
 
-				if( this.at(rI, cI) &&
-					(nCount === 2 || nCount === 3)) {
-					newBoard[rI][cI] = true;
-				}
-
-				if(!this.at(rI, cI) && nCount === 3) {
-					newBoard[rI][cI] = true;
-				}
-
-			}, this);
-		}, this);
-
-		this.board = newBoard;
+		return new Game(seed);
 	};
 
+	Game.prototype.getNeighbourCount = function (x, y) {
+		var self = this;
+		return [-1, 0, 1].reduce(function (total, dx) {
+			return total + [-1, 0, 1].reduce(function (subtotal, dy) {
+				if(dx === 0 && dy === 0) {
+					return subtotal;
+				}
+				return subtotal + +self.at(x+dx, y+dy);
+			}, 0);
+		}, 0);
+	};
 
 	return Game;
-
 }());
-
 
 
 module.exports = Game;

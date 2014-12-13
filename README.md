@@ -9,3 +9,8 @@ Each session will be pushed to repository as a single commit; watch this file fo
 ## code restrictions ##
 **Session 1**
 no restrictions
+
+
+**Sesstion 2**
+* no restrictions for the board (either finite, tours or infinite)
+* game is immutable
