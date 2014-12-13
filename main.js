@@ -1,101 +1,74 @@
 var _ = require('lodash');
 
 
+var Game = (function () {
+	var Game = function () {
+		this.size = 10;
+		this.board = this.createBoard(this.size);
+	};
 
-var Cell = (function () {
-
-	var encode, getSurvivingCells, getBornCells, checkCell;
-
-	var Cell = function (x, y) {
-		if(typeof x === 'string') {
-			this.x = +x.split(':')[0];
-			this.y = +x.split(':')[1];
-		} else {
-			this.x = x;
-			this.y = y;
+	Game.prototype.createBoard = function (size) {
+	    var board = [];
+		for (var i = 0; i< size; i++) {
+			board[i] = [];
+			for(var j = 0; j < size; j++) {
+				board[i][j] = false;
+			}
 		}
-		Cell.livingCells[this.x+":"+this.y] = this;
+
+		return board;
 	};
 
-	Cell.prototype.die = function () {
-		delete Cell.livingCells[this.x+":"+this.y];
+	Game.prototype.at = function (x, y) {
+		if(x < 0 || x >= this.size) return false;
+	    return !!this.board[x][y];
 	};
 
-	Cell.prototype.countN = function () {
-		return this.getNearbyCellTags().reduce(function (total, cell) {
-			return Cell.at(cell) ? total + 1 : total;
-		}, 0);
+	Game.prototype.spawn = function (x, y) {
+	    this.board[x][y] = true;
 	};
 
-	Cell.prototype.getNearbyCellTags = function () {
-		var nearby = [], t = [-1, 0, 1];
-		t.forEach(function (dx) {
-			t.forEach(function (dy) {
-				if(dx !== 0 || dy !==0) nearby.push(encode(this.x+dx, this.y+dy));
+	Game.prototype.getNCount = function (rI, cI) {
+		var nCount = 0;
+		if(this.at(rI+1, cI+1)) nCount++;
+		if(this.at(rI+1, cI)) nCount++;
+		if(this.at(rI+1, cI-1)) nCount++;
+		if(this.at(rI, cI+1)) nCount++;
+		if(this.at(rI, cI-1)) nCount++;
+		if(this.at(rI-1, cI+1)) nCount++;
+		if(this.at(rI-1, cI)) nCount++;
+		if(this.at(rI-1, cI-1)) nCount++;
+
+		return nCount;
+	};
+
+	Game.prototype.tick = function () {
+		var newBoard = this.createBoard(this.size);
+
+		this.board.forEach(function (row, rI) {
+			row.forEach(function (cell, cI) {
+				var nCount = this.getNCount(rI, cI);
+
+				if( this.at(rI, cI) &&
+					(nCount === 2 || nCount === 3)) {
+					newBoard[rI][cI] = true;
+				}
+
+				if(!this.at(rI, cI) && nCount === 3) {
+					newBoard[rI][cI] = true;
+				}
+
 			}, this);
 		}, this);
-		return nearby;
-	};
 
-	Cell.prototype.canSurvive = function () {
-		var n = this.countN();
-		return !(n < 2 || n > 3);
-	};
-
-	Cell.prototype.canBeBorn = function () {
-		return this.countN() === 3;
+		this.board = newBoard;
 	};
 
 
-	Cell.livingCells = {};
-
-	Cell.reset = function () {
-		Cell.livingCells = {};
-	};
-	Cell.at = function (x, y) {
-		return !!Cell.livingCells[encode(x,y)];
-	};
-
-	Cell.advance = function () {
-		var cellsBornThisTick, cellsSurvivingThisTick;
-
-		cellsBornThisTick = getBornCells();
-		cellsSurvivingThisTick = getSurvivingCells();
-
-		Cell.livingCells = _.assign(cellsSurvivingThisTick, cellsBornThisTick);
-	};
-
-	getBornCells = function () {
-		var cells = {};
-		_.forEach(Cell.livingCells, function (cell) {
-			cell.getNearbyCellTags().forEach(checkCell.bind(null, cells));
-		});
-		return cells;
-	};
-
-	checkCell = function (cells, tag) {
-		var c;
-
-		if (Cell.at(tag)) return;
-
-		c = new Cell(tag);
-		if( c.canBeBorn() ) cells[tag] = c;
-
-		c.die();
-	};
-
-	getSurvivingCells = function () {
-		return _.pick(Cell.livingCells, function (cell) {
-			return Cell.livingCells[encode(cell.x, cell.y)].canSurvive();
-		});
-	};
-
-	encode = function (x, y) {
-		return typeof x === 'string' ? x : x + ':' + y;
-	};
-
-	return Cell;
+	return Game;
 
 }());
 
-exports.Cell = Cell;
+
+
+module.exports = Game;
